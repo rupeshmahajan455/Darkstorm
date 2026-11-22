@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DarkStorm — Server Status</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #090d16;
+      color: #f8fafc;
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+    .card {
+      width: 100%;
+      max-width: 440px;
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      font-size: 22px;
+      margin: 0;
+    }
+    .addr {
+      font-size: 13px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .badge {
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .online {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+    }
+    .offline {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+    .maintenance {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+    .players-box {
+      background: #0b101b;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .players-label {
+      font-size: 12px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .players-count {
+      font-size: 28px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+    .note {
+      font-size: 14px;
+      color: #e2e8f0;
+      line-height: 1.5;
+      margin: 10px 0 0;
+      min-height: 20px;
+    }
+    .footer {
+      margin-top: 18px;
+      font-size: 12px;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div>
+        <h1>DarkStorm</h1>
+        <div class="addr">paid51.skilloraclouds.com:20002</div>
+      </div>
+    </div>
+
+    <div class="badges">
+      <span id="liveBadge" class="badge offline">Checking...</span>
+      <span id="customBadge" class="badge" style="display:none;"></span>
+    </div>
+
+    <div class="players-box">
+      <div class="players-label">Live Players</div>
+      <div id="playersCount" class="players-count">-- / --</div>
+    </div>
+
+    <p id="statusNote" class="note"></p>
+
+    <div class="footer">
+      <span id="lastUpdated">Updating...</span>
+      <span>Auto-refresh: 30s</span>
+    </div>
+  </div>
+
+  <script>
+    const SERVER_ADDRESS = "paid51.skilloraclouds.com:20002";
+    const CUSTOM_STATUS_URL = "./status.json";
+
+    async function updateLiveServer() {
+      const liveBadge = document.getElementById("liveBadge");
+      const playersCount = document.getElementById("playersCount");
+
+      try {
+        const res = await fetch(`https://api.mcsrvstat.us/3/${SERVER_ADDRESS}`, { cache: "no-store" });
+        const data = await res.json();
+
+        if (data && data.online) {
+          liveBadge.textContent = "Server Online";
+          liveBadge.className = "badge online";
+          const online = data.players?.online ?? 0;
+          const max = data.players?.max ?? 0;
+          playersCount.textContent = `${online} / ${max}`;
+        } else {
+          liveBadge.textContent = "Server Offline";
+          liveBadge.className = "badge offline";
+          playersCount.textContent = "0 / 0";
+        }
+      } catch (err) {
+        liveBadge.textContent = "Status Check Failed";
+        liveBadge.className = "badge offline";
+      }
+    }
+
+    async function updateCustomStatus() {
+      if (!CUSTOM_STATUS_URL) return;
+      const customBadge = document.getElementById("customBadge");
+      const statusNote = document.getElementById("statusNote");
+
+      try {
+        const res = await fetch(`${CUSTOM_STATUS_URL}?t=${Date.now()}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const cfg = await res.json();
+
+        if (cfg.mode === "maintenance") {
+          customBadge.style.display = "inline-block";
+          customBadge.className = "badge maintenance";
+          customBadge.textContent = "On Maintenance";
+        } else if (cfg.mode === "live") {
+          customBadge.style.display = "inline-block";
+          customBadge.className = "badge online";
+          customBadge.textContent = "Server is ON";
+        } else {
+          customBadge.style.display = "none";
+        }
+
+        statusNote.textContent = cfg.note || "";
+      } catch (err) {
+        // Ignore if status.json is not reachable yet
+      }
+    }
+
+    async function refreshAll() {
+      await Promise.all([updateLiveServer(), updateCustomStatus()]);
+      const now = new Date();
+      document.getElementById("lastUpdated").textContent =
+        `Updated: ${now.toLocaleTimeString()}`;
+    }
+
+    refreshAll();
+    setInterval(refreshAll, 30000);
+  </script>
+</body>
+  </html>
