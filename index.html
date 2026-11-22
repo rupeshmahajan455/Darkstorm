@@ -1,148 +1,582 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DarkStorm — Server Status</title>
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --bg-base: #060913;
+      --bg-surface: rgba(15, 23, 42, 0.72);
+      --bg-elevated: rgba(24, 35, 62, 0.68);
+      --border-glass: rgba(255, 255, 255, 0.14);
+      --gloss-shine: linear-gradient(
+        125deg,
+        rgba(255, 255, 255, 0.22) 0%,
+        rgba(255, 255, 255, 0.05) 38%,
+        rgba(255, 255, 255, 0) 65%
+      );
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --code-bg: rgba(255, 255, 255, 0.08);
+      --orb-1: rgba(139, 92, 246, 0.34);
+      --orb-2: rgba(6, 182, 212, 0.28);
+      --orb-3: rgba(236, 72, 153, 0.24);
+      --saffron: #ff9933;
+      --indian-green: #138808;
+      --shadow-card: 0 28px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+
+    html[data-theme="light"] {
+      --bg-base: #eef4ff;
+      --bg-surface: rgba(255, 255, 255, 0.78);
+      --bg-elevated: rgba(255, 255, 255, 0.88);
+      --border-glass: rgba(15, 23, 42, 0.12);
+      --gloss-shine: linear-gradient(
+        125deg,
+        rgba(255, 255, 255, 0.75) 0%,
+        rgba(255, 255, 255, 0.2) 42%,
+        rgba(255, 255, 255, 0) 70%
+      );
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --code-bg: rgba(15, 23, 42, 0.07);
+      --orb-1: rgba(99, 102, 241, 0.22);
+      --orb-2: rgba(14, 165, 233, 0.22);
+      --orb-3: rgba(244, 114, 182, 0.18);
+      --shadow-card: 0 24px 60px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #090d16;
-      color: #f8fafc;
       margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 20px;
-    }
-    .card {
-      width: 100%;
-      max-width: 440px;
-      background: #111827;
-      border: 1px solid #1f2937;
-      border-radius: 18px;
-      padding: 28px;
-      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
-    }
-    .header {
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 18px;
+      padding: 28px 16px;
+      position: relative;
+      overflow-x: hidden;
+      transition: background-color 0.35s ease, color 0.35s ease;
     }
-    h1 {
-      font-size: 22px;
+
+    /* Dynamic colorful ambient orbs */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(75px);
+      animation: floatOrb 14s ease-in-out infinite alternate;
+    }
+
+    .orb-1 {
+      width: 380px;
+      height: 380px;
+      background: var(--orb-1);
+      top: -80px;
+      left: -80px;
+    }
+
+    .orb-2 {
+      width: 420px;
+      height: 420px;
+      background: var(--orb-2);
+      bottom: -110px;
+      right: -90px;
+      animation-delay: -4s;
+    }
+
+    .orb-3 {
+      width: 300px;
+      height: 300px;
+      background: var(--orb-3);
+      top: 42%;
+      left: 55%;
+      animation-delay: -8s;
+    }
+
+    @keyframes floatOrb {
+      0% {
+        transform: translate(0, 0) scale(1);
+      }
+      50% {
+        transform: translate(24px, -22px) scale(1.08);
+      }
+      100% {
+        transform: translate(-18px, 20px) scale(0.96);
+      }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 700px;
+      background: var(--bg-surface);
+      backdrop-filter: blur(22px) saturate(160%);
+      -webkit-backdrop-filter: blur(22px) saturate(160%);
+      border: 1px solid var(--border-glass);
+      border-radius: 26px;
+      padding: 30px;
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    .container::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--gloss-shine);
+      pointer-events: none;
+    }
+
+    .top-bar {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .brand-title {
       margin: 0;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      background: linear-gradient(95deg, #38bdf8 0%, #a855f7 45%, #ec4899 80%, #fb923c 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradientShift 7s linear infinite;
     }
-    .addr {
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .brand-sub {
+      margin-top: 8px;
       font-size: 13px;
-      color: #9ca3af;
-      margin-top: 4px;
-      line-height: 1.5;
+      color: var(--text-muted);
+      line-height: 1.65;
     }
+
+    code {
+      color: var(--text-main);
+      background: var(--code-bg);
+      padding: 2px 7px;
+      border-radius: 7px;
+      font-size: 12.5px;
+      border: 1px solid var(--border-glass);
+    }
+
+    .top-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .theme-btn {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border-glass);
+      background: var(--bg-elevated);
+      color: var(--text-main);
+      font-size: 12.5px;
+      font-weight: 700;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      transition: transform 0.15s ease, filter 0.2s ease;
+    }
+
+    .theme-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+    }
+
     .badges {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 18px;
+      justify-content: flex-end;
     }
+
     .badge {
-      padding: 6px 12px;
+      padding: 6px 13px;
       border-radius: 999px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-    .online {
-      background: rgba(34, 197, 94, 0.15);
-      color: #4ade80;
-      border: 1px solid rgba(34, 197, 94, 0.35);
-    }
-    .offline {
-      background: rgba(239, 68, 68, 0.15);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.35);
-    }
-    .maintenance {
-      background: rgba(245, 158, 11, 0.15);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.35);
-    }
-    .players-box {
-      background: #0b101b;
-      border: 1px solid #1e293b;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 14px;
-    }
-    .players-label {
-      font-size: 12px;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .players-count {
-      font-size: 28px;
+      font-size: 12.5px;
       font-weight: 700;
-      margin-top: 4px;
+      backdrop-filter: blur(10px);
     }
-    .note {
-      font-size: 14px;
-      color: #e2e8f0;
+
+    .online {
+      background: rgba(16, 185, 129, 0.16);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.38);
+    }
+
+    html:not([data-theme="light"]) .online {
+      color: #4ade80;
+    }
+
+    .offline {
+      background: rgba(244, 63, 94, 0.16);
+      color: #e11d48;
+      border: 1px solid rgba(244, 63, 94, 0.38);
+    }
+
+    html:not([data-theme="light"]) .offline {
+      color: #fb7185;
+    }
+
+    .maintenance {
+      background: rgba(245, 158, 11, 0.18);
+      color: #d97706;
+      border: 1px solid rgba(245, 158, 11, 0.42);
+    }
+
+    html:not([data-theme="light"]) .maintenance {
+      color: #fbbf24;
+    }
+
+    .grid-stats {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .stat-card {
+      position: relative;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-glass);
+      border-radius: 18px;
+      padding: 18px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    }
+
+    .stat-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--gloss-shine);
+      pointer-events: none;
+    }
+
+    .stat-card.players-accent {
+      border-top: 3px solid #22d3ee;
+    }
+
+    .stat-card.conn-accent {
+      border-top: 3px solid #a855f7;
+    }
+
+    .stat-label {
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .stat-value {
+      margin-top: 8px;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .stat-meta {
+      margin-top: 6px;
+      font-size: 12.5px;
+      color: var(--text-muted);
       line-height: 1.5;
-      margin: 10px 0 0;
-      min-height: 20px;
     }
-    .footer {
+
+    .note-box {
+      position: relative;
+      margin-top: 16px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.14), rgba(236, 72, 153, 0.12));
+      border: 1px solid var(--border-glass);
+      border-radius: 16px;
+      padding: 15px 18px;
+      font-size: 14px;
+      color: var(--text-main);
+      line-height: 1.55;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    }
+
+    .actions {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
       margin-top: 18px;
-      font-size: 12px;
-      color: #64748b;
+    }
+
+    .btn {
+      position: relative;
       display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      padding: 13px 16px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 14px;
+      color: #ffffff;
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      transition: transform 0.16s ease, filter 0.16s ease;
+    }
+
+    .btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(255, 255, 255, 0.28), transparent 55%);
+      pointer-events: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+
+    .btn-discord {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #ec4899 100%);
+    }
+
+    .btn-store {
+      background: linear-gradient(135deg, #06b6d4 0%, #0284c7 55%, #2563eb 100%);
+    }
+
+    .indian-section {
+      position: relative;
+      margin-top: 22px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-glass);
+      border-top: 3px solid var(--saffron);
+      border-bottom: 3px solid var(--indian-green);
+      border-radius: 20px;
+      padding: 20px 22px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      overflow: hidden;
+    }
+
+    .indian-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
       justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .indian-title {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 800;
+      background: linear-gradient(90deg, #ff9933 0%, #f59e0b 48%, #22c55e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .indian-tag {
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 11px;
+      border-radius: 999px;
+      background: rgba(255, 153, 51, 0.16);
+      color: #f97316;
+      border: 1px solid rgba(255, 153, 51, 0.35);
+    }
+
+    html:not([data-theme="light"]) .indian-tag {
+      color: #fdba74;
+    }
+
+    .indian-lines {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--text-muted);
+      font-size: 13.5px;
+      line-height: 1.72;
+    }
+
+    html[data-theme="light"] .indian-lines {
+      color: #1e293b;
+    }
+
+    .indian-lines li {
+      margin-bottom: 4px;
+    }
+
+    .footer {
+      position: relative;
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-glass);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="header">
+  <div class="ambient-bg" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <main class="container">
+    <header class="top-bar">
       <div>
-        <h1>DarkStorm</h1>
-        <div class="addr">
+        <h1 class="brand-title">DarkStorm</h1>
+        <div class="brand-sub">
           IP: <code>Darkstorm.qd.je</code><br />
           Java Port: <code>20002</code> · Bedrock Port: <code>20042</code>
         </div>
       </div>
+
+      <div class="top-right">
+        <button id="themeToggle" class="theme-btn" type="button" aria-label="Toggle Dark or Bright Mode">
+          <span id="themeIcon">☀️</span>
+          <span id="themeLabel">Bright Mode</span>
+        </button>
+
+        <div class="badges">
+          <span id="liveBadge" class="badge offline">Checking...</span>
+          <span id="customBadge" class="badge" style="display:none;"></span>
+        </div>
+      </div>
+    </header>
+
+    <section class="grid-stats">
+      <div class="stat-card players-accent">
+        <div class="stat-label">Live Players</div>
+        <div id="playersCount" class="stat-value">-- / --</div>
+        <div class="stat-meta">Real-time player count from server query</div>
+      </div>
+
+      <div class="stat-card conn-accent">
+        <div class="stat-label">Connection Info</div>
+        <div class="stat-value" style="font-size: 18px; margin-top: 11px;">Darkstorm.qd.je</div>
+        <div class="stat-meta">
+          Java: <strong>20002</strong> · Bedrock: <strong>20042</strong>
+        </div>
+      </div>
+    </section>
+
+    <div id="statusNote" class="note-box">Loading server status...</div>
+
+    <div class="actions">
+      <a class="btn btn-discord" href="https://dsc.gg/darkstorm" target="_blank" rel="noopener noreferrer">
+        Join Discord (dsc.gg/darkstorm)
+      </a>
+      <a class="btn btn-store" href="https://Darkstormshop.netlify.app" target="_blank" rel="noopener noreferrer">
+        Visit Store (Darkstormshop.netlify.app)
+      </a>
     </div>
 
-    <div class="badges">
-      <span id="liveBadge" class="badge offline">Checking...</span>
-      <span id="customBadge" class="badge" style="display:none;"></span>
-    </div>
+    <section class="indian-section" aria-label="Proudly Indian">
+      <div class="indian-header">
+        <h2 class="indian-title">Proudly Indian Community</h2>
+        <span class="indian-tag">Proudly Indian</span>
+      </div>
+      <ul class="indian-lines">
+        <li>Proudly Indian at heart, DarkStorm is built with passion by Indian creators for players who love competitive survival.</li>
+        <li>We bring together Indian gamers from every corner into one energetic, welcoming, and active Minecraft community.</li>
+        <li>From late-night grinding sessions to weekend clan battles, every moment on DarkStorm feels alive with desi energy.</li>
+        <li>We value fair play, active moderation, and a respectful environment where new and veteran players both belong.</li>
+        <li>Our Lifesteal and multiplayer experiences are tuned for smooth gameplay, exciting progression, and memorable rivalries.</li>
+        <li>Both Java and Bedrock players can jump in seamlessly and play together without boundaries.</li>
+        <li>Community feedback shapes our updates, events, and improvements every step of the way.</li>
+        <li>Our Discord server at <code>dsc.gg/darkstorm</code> is the hub for announcements, support, giveaways, and squad building.</li>
+        <li>Players looking to support the network or unlock perks can visit our official store at <code>Darkstormshop.netlify.app</code>.</li>
+        <li>We take pride in building a reliable Indian Minecraft space that grows stronger with every single player.</li>
+        <li>Thank you for being part of the DarkStorm journey—stay legendary and play fair.</li>
+      </ul>
+    </section>
 
-    <div class="players-box">
-      <div class="players-label">Live Players</div>
-      <div id="playersCount" class="players-count">-- / --</div>
-    </div>
-
-    <p id="statusNote" class="note"></p>
-
-    <div class="footer">
-      <span id="lastUpdated">Updating...</span>
-      <span>Auto-refresh: 30s</span>
-    </div>
-  </div>
+    <footer class="footer">
+      <span id="lastUpdated">Last checked: --</span>
+      <span>Auto-refresh interval: Every 10 minutes</span>
+    </footer>
+  </main>
 
   <script>
-    const JAVA_ADDRESS = "Darkstorm.qd.je:20002";
+    const JAVA_SERVER_ADDR = "Darkstorm.qd.je:20002";
     const CUSTOM_STATUS_URL = "./status.json";
+    const TEN_MINUTES_MS = 10 * 60 * 1000;
+    const THEME_STORAGE_KEY = "darkstorm_theme_mode";
+
+    function applyTheme(theme) {
+      const root = document.documentElement;
+      const icon = document.getElementById("themeIcon");
+      const label = document.getElementById("themeLabel");
+
+      if (theme === "light") {
+        root.setAttribute("data-theme", "light");
+        icon.textContent = "🌙";
+        label.textContent = "Dark Mode";
+      } else {
+        root.setAttribute("data-theme", "dark");
+        icon.textContent = "☀️";
+        label.textContent = "Bright Mode";
+      }
+    }
+
+    function initThemeToggle() {
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || "dark";
+      applyTheme(savedTheme);
+
+      document.getElementById("themeToggle").addEventListener("click", () => {
+        const current = document.documentElement.getAttribute("data-theme");
+        const next = current === "light" ? "dark" : "light";
+        localStorage.setItem(THEME_STORAGE_KEY, next);
+        applyTheme(next);
+      });
+    }
 
     async function updateLiveServer() {
       const liveBadge = document.getElementById("liveBadge");
       const playersCount = document.getElementById("playersCount");
 
       try {
-        const res = await fetch(`https://api.mcsrvstat.us/3/${JAVA_ADDRESS}`, { cache: "no-store" });
+        const res = await fetch(`https://api.mcsrvstat.us/3/${JAVA_SERVER_ADDR}`, {
+          cache: "no-store"
+        });
         const data = await res.json();
 
         if (data && data.online) {
@@ -168,7 +602,9 @@
       const statusNote = document.getElementById("statusNote");
 
       try {
-        const res = await fetch(`${CUSTOM_STATUS_URL}?t=${Date.now()}`, { cache: "no-store" });
+        const res = await fetch(`${CUSTOM_STATUS_URL}?t=${Date.now()}`, {
+          cache: "no-store"
+        });
         if (!res.ok) return;
         const cfg = await res.json();
 
@@ -184,9 +620,9 @@
           customBadge.style.display = "none";
         }
 
-        statusNote.textContent = cfg.note || "";
+        statusNote.textContent = cfg.note || "Welcome to DarkStorm!";
       } catch (err) {
-        // Ignore if status.json is not reachable yet
+        statusNote.textContent = "Welcome to DarkStorm!";
       }
     }
 
@@ -194,11 +630,12 @@
       await Promise.all([updateLiveServer(), updateCustomStatus()]);
       const now = new Date();
       document.getElementById("lastUpdated").textContent =
-        `Updated: ${now.toLocaleTimeString()}`;
+        `Last checked: ${now.toLocaleTimeString()}`;
     }
 
+    initThemeToggle();
     refreshAll();
-    setInterval(refreshAll, 30000);
+    setInterval(refreshAll, TEN_MINUTES_MS);
   </script>
 </body>
 </html>
