@@ -40,6 +40,7 @@
       font-size: 13px;
       color: #9ca3af;
       margin-top: 4px;
+      line-height: 1.5;
     }
     .badges {
       display: flex;
@@ -107,7 +108,10 @@
     <div class="header">
       <div>
         <h1>DarkStorm</h1>
-        <div class="addr">paid51.skilloraclouds.com:20002</div>
+        <div class="addr">
+          IP: <code>Darkstorm.qd.je</code><br />
+          Java Port: <code>20002</code> · Bedrock Port: <code>20042</code>
+        </div>
       </div>
     </div>
 
@@ -130,7 +134,7 @@
   </div>
 
   <script>
-    const SERVER_ADDRESS = "paid51.skilloraclouds.com:20002";
+    const JAVA_ADDRESS = "Darkstorm.qd.je:20002";
     const CUSTOM_STATUS_URL = "./status.json";
 
     async function updateLiveServer() {
@@ -138,7 +142,7 @@
       const playersCount = document.getElementById("playersCount");
 
       try {
-        const res = await fetch(`https://api.mcsrvstat.us/3/${SERVER_ADDRESS}`, { cache: "no-store" });
+        const res = await fetch(`https://api.mcsrvstat.us/3/${JAVA_ADDRESS}`, { cache: "no-store" });
         const data = await res.json();
 
         if (data && data.online) {
@@ -197,4 +201,4 @@
     setInterval(refreshAll, 30000);
   </script>
 </body>
-  </html>
+</html>
